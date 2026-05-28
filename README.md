@@ -10,7 +10,7 @@ This repository provides the entire database engineering workflow, including fou
 
 The repository contains the following core assets:
 
-1.  **`202401077_ERD_Relational_BCNF-Proofs.pdf`** The theoretical framework and normalization dossier. Contains the structural ER Diagram, functional dependency (FD) maps, candidate key derivations, identification of BCNF anomalies, and mathematical validation of lossless decompositions.
+1.  **`202401165_ERD_Relational_BCNF-Proofs.pdf`** The theoretical framework and normalization dossier. Contains the structural ER Diagram, functional dependency (FD) maps, candidate key derivations, identification of BCNF anomalies, and mathematical validation of lossless decompositions.
 2.  **`Create-Table-Queries.txt`** The DDL engineering script defining the underlying database structure. Initializes the isolated `trading` schema namespace and constructs **22 distinct relational tables** integrated with strict constraints (`PRIMARY KEY`, `UNIQUE`, `FOREIGN KEY`, `CHECK`).
 3.  **`Insert-Table-Queries.txt`** The data ingestion script. Populates the schema with a rich, synchronized mock dataset containing **30 to 40 diverse rows per table** to reliably simulate transaction flows and trigger meaningful results across all analytics.
 4.  **`QUERIES (2).sql`** The analytical engine. Features **15 state-of-the-art business intelligence SQL queries** addressing complex reporting requirements, operational bottlenecks, compliance surveillance, and risk management.
