@@ -98,7 +98,7 @@ TA_ID → {all attributes}
 
 ### 4. BANK_ACC
 
-**Attributes:** `BANK_ACC_ID, ACC_NO, IFSC_CODE, BANK_NAME, BRANCH_NAME, IS_PRIMARY, INVESTOR_ID`
+**Attributes:** `BANK_ACC_ID, ACC_NO, IFSC_CODE, IS_PRIMARY, INVESTOR_ID`
 
 **Candidate Keys:**
 - `{BANK_ACC_ID}` — Primary Key
@@ -304,7 +304,7 @@ HOLDING_ID               → {all attributes}
 
 ### 13. ORDER_RECORD
 
-**Attributes:** `ORDER_ID, SECURITY_ID, TA_ID, PLACED_BY_BROKER, SIDE, ORDER_TYPE, QUANTITY, LIMIT_PRICE, STOP_LOSS_PRICE, STATUS, PLACED_AT`
+**Attributes:** `ORDER_ID, SECURITY_ID, TA_ID, BROKER_ID, SIDE, ORDER_TYPE, QUANTITY, LIMIT_PRICE, STOP_LOSS_PRICE, STATUS, PLACED_AT`
 
 **Candidate Keys:**
 - `{ORDER_ID}` — Primary Key
@@ -317,7 +317,7 @@ ORDER_ID → {all attributes}
 **BCNF Proof:**
 - `TA_ID` is **not** a candidate key (one trading account may place many orders).
 - `SECURITY_ID` is **not** a candidate key.
-- `PLACED_BY_BROKER` is **not** a candidate key (nullable and non-unique).
+- `BROKER_ID` is **not** a candidate key (nullable and non-unique).
 - The only determinant is `ORDER_ID`, which is a superkey.
 
 **Conclusion:** ✅ **ORDER_RECORD is in BCNF.**
