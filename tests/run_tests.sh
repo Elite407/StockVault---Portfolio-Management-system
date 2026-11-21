@@ -36,6 +36,8 @@ TEST_FILES=(
     "test_views.sql"
     "test_indexes.sql"
     "test_seed_data.sql"
+    "test_rls.sql"
+    "test_financial_invariants.sql"
     "test_queries.sql"
 )
 

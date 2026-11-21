@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "db:seed": "node seed.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node --test test/api.test.js",
+    "test:db": "node ../tests/runner.js"
   },
   "keywords": [],
   "author": "",
