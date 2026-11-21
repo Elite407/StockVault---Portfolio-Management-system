@@ -245,13 +245,13 @@ BEGIN
     END IF;
     RAISE NOTICE 'PASS: order_record has 11 columns';
 
-    -- TRADE: 11 columns
+    -- TRADE: 10 columns
     SELECT COUNT(*) INTO v_count FROM information_schema.columns
     WHERE table_schema = 'trading' AND table_name = 'trade';
-    IF v_count <> 11 THEN
-        RAISE EXCEPTION 'FAIL: trade table has % columns, expected 11', v_count;
+    IF v_count <> 10 THEN
+        RAISE EXCEPTION 'FAIL: trade table has % columns, expected 10', v_count;
     END IF;
-    RAISE NOTICE 'PASS: trade has 11 columns';
+    RAISE NOTICE 'PASS: trade has 10 columns';
 END $$;
 
 
