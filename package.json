@@ -1,0 +1,22 @@
+{
+  "name": "stockvault",
+  "version": "1.0.0",
+  "description": "StockVault — Portfolio Management & Stock Brokerage Database System",
+  "scripts": {
+    "start": "npm --prefix backend start",
+    "test": "npm --prefix backend test",
+    "test:db": "npm --prefix backend run test:db",
+    "db:seed": "npm --prefix backend run db:seed"
+  },
+  "keywords": [
+    "postgresql",
+    "bcnf",
+    "database",
+    "fintech",
+    "trading",
+    "sql",
+    "portfolio-management"
+  ],
+  "author": "Pranamya Sanghvi",
+  "license": "MIT"
+}
