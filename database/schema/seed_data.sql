@@ -284,6 +284,7 @@ INSERT INTO trade (order_id, trade_ref, fill_price, filled_qty, trade_datetime, 
 (12, 'TRD-20260726-009', 2920.00, 500, NOW() - INTERVAL '12 days' + INTERVAL '7 minutes',  730.00, 146.00,  73.00, 1460949.00),
 (13, 'TRD-20260716-010',  960.00, 400, NOW() - INTERVAL '22 days' + INTERVAL '10 minutes', 192.00,  38.40,  19.20,  384249.60),
 (14, 'TRD-20260710-011',   35.50,1000, NOW() - INTERVAL '28 days' + INTERVAL '3 minutes',   17.75,   3.55,   1.78,   35523.08),
+(15, 'TRD-20260803-020', 2900.00,  50, NOW() - INTERVAL '2 days'  + INTERVAL '10 minutes',  72.50,  14.50,   7.25,  144905.75),
 
 -- Ananya trades
 (17, 'TRD-20260724-012',  132.00, 250, NOW() - INTERVAL '14 days' + INTERVAL '9 minutes',   16.50,   3.30,   1.65,   33021.45),
