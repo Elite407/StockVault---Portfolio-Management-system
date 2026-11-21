@@ -1,0 +1,194 @@
+# StockVault: Student-Friendly, Local-First Build Plan
+
+> **Core Principle**: Everything runs on YOUR machine. Zero cloud costs. Zero paid APIs.  
+> We build a genuinely impressive, working product first — cloud deployment is the *last* step, not the first.
+
+---
+
+## 1. What Are We Actually Building?
+
+A **full-stack Portfolio Management Web App** that:
+- Connects to your **existing local PostgreSQL** StockVault database
+- Has a beautiful, modern dashboard (portfolio, orders, broker stats)
+- Has rock-solid authentication (login, registration, JWT)
+- Later: an AI chatbot that can answer questions about your portfolio using LangChain
+
+**Everything runs on `localhost`.** No AWS, no cloud databases, no paid APIs until you choose to deploy.
+
+---
+
+## 2. What You Already Have (Your Advantage)
+
+| What | Status | Notes |
+| :--- | :--- | :--- |
+| PostgreSQL database | ✅ Done | 14 tables, BCNF normalized, seed data |
+| Business logic triggers | ✅ Done | 9 triggers handle balance updates, order validation, holdings |
+| Reusable views | ✅ Done | 7 views for dashboards (portfolio summary, broker performance) |
+| Application SQL queries | ✅ Done | 17 queries ready to be wrapped into API endpoints |
+| Analytical queries | ✅ Done | 13 queries for charts and insights |
+
+> [!IMPORTANT]
+> You are NOT starting from scratch. Your database already does 70% of the work. The backend is mostly just a secure wrapper around your existing SQL.
+
+---
+
+## 3. The 100% Free Tech Stack
+
+| Layer | Tool | Cost | Why? |
+| :--- | :--- | :--- | :--- |
+| **Database** | PostgreSQL (local) | Free | Already set up and running |
+| **Backend** | Python + FastAPI | Free | Async, fast, Pydantic validation, perfect for LangChain later |
+| **ORM** | SQLAlchemy 2.0 | Free | Prevents SQL injection, maps to your existing tables |
+| **Auth** | JWT (python-jose) + bcrypt | Free | No need for Auth0 or Firebase — we build it ourselves |
+| **Frontend** | Next.js (React) | Free | Runs on `localhost:3000`, beautiful UI |
+| **Styling** | TailwindCSS + shadcn/ui | Free | Modern, dark-mode, Zerodha-like design |
+| **AI (later)** | LangChain + Ollama (local LLM) | Free | Run models like Llama 3 entirely on your machine — no OpenAI API key needed |
+| **Caching (optional)** | Redis (local) | Free | Only add when you need it |
+
+> [!TIP]
+> For the AI layer, **Ollama** lets you run LLMs (Llama 3.1, Mistral, Gemma) completely locally and for free. No API keys, no usage limits, no billing surprises.
+
+---
+
+## 4. Step-by-Step Build Order
+
+We build in **vertical slices** — each step produces something you can actually see and use.
+
+---
+
+### Step 1: FastAPI Project Skeleton + Database Connection
+**Goal**: A running backend that can talk to your local PostgreSQL.
+
+What we build:
+- FastAPI project with proper folder structure (`app/`, `models/`, `schemas/`, `routers/`)
+- SQLAlchemy models that mirror your existing 14 tables (NOT recreating them — just mapping to what exists)
+- A single health-check endpoint: `GET /api/health` → returns `{ "status": "ok", "db": "connected" }`
+- Environment config via `.env` file (DB password stays local, never committed)
+
+**Security baked in from Day 1**:
+- `.env` in `.gitignore`
+- CORS middleware configured
+- Input validation via Pydantic on every endpoint
+
+**What you'll see**: Hit `http://localhost:8000/docs` and get a full interactive Swagger UI.
+
+---
+
+### Step 2: Authentication System (Registration + Login + JWT)
+**Goal**: Users can register, log in, and get a secure token.
+
+What we build:
+- `POST /api/auth/register` — Creates investor, hashes password with bcrypt
+- `POST /api/auth/login` — Validates credentials, returns JWT access token (15 min expiry) + refresh token (7 day, HttpOnly cookie)
+- `POST /api/auth/refresh` — Issues new access token from refresh token
+- `GET /api/auth/me` — Returns current user profile (protected route)
+- Dependency injection: `get_current_user()` extracts and validates JWT on every protected endpoint
+
+**Security maxxing**:
+- Passwords hashed with bcrypt (your DB already has `PASSWORD_HASH` column)
+- Short-lived access tokens (15 min)
+- Refresh tokens in HttpOnly cookies (JavaScript can't steal them)
+- Every protected route requires valid JWT — no exceptions
+
+---
+
+### Step 3: Core Portfolio & Trading API Endpoints
+**Goal**: The API can do everything a trading app needs.
+
+What we build (wrapping your existing SQL/views):
+- `GET /api/portfolio` → Queries `v_portfolio_summary` for the logged-in user
+- `GET /api/orders` → Queries `v_order_with_trade` with pagination
+- `POST /api/orders` → Inserts into `ORDER_RECORD` (your `trg_validate_order` trigger handles validation!)
+- `DELETE /api/orders/{id}` → Cancels an order (your `trg_order_prevent_cancel_executed` trigger blocks invalid cancels!)
+- `GET /api/securities` → List/search securities with `ILIKE` (your query #2 from application queries)
+- `GET /api/fund-transactions` → Queries `v_fund_ledger`
+- `POST /api/fund-transactions` → Deposit/withdraw (your `trg_fund_txn_update_balance` trigger auto-updates balance!)
+- `GET /api/brokers/performance` → Queries `v_broker_performance`
+
+> [!NOTE]
+> Notice how most of the heavy lifting is done by your existing triggers and views. The API is mostly a thin, secure layer on top.
+
+**Security maxxing**:
+- Every endpoint filters by `investor_id` from the JWT — users can NEVER see another user's data
+- Rate limiting with `slowapi` (in-memory, no Redis needed yet)
+- Input validation on every request body
+
+---
+
+### Step 4: Next.js Frontend — The Dashboard
+**Goal**: A stunning, dark-mode portfolio dashboard running on `localhost:3000`.
+
+What we build:
+- Login / Registration pages
+- **Dashboard** with cards showing: Total Portfolio Value, Today's P&L, Number of Holdings
+- **Portfolio Table** showing each holding with unrealized P&L (green/red color coding)
+- **Order History** with status badges (OPEN, EXECUTED, CANCELLED)
+- **Place Order** form (select security, order type, quantity)
+- **Fund Management** page (deposit/withdraw)
+- **Broker Performance** charts
+
+**Design**: Dark theme, glassmorphism cards, smooth transitions, responsive layout. Think Zerodha Kite meets Robinhood.
+
+---
+
+### Step 5: LangChain + Ollama — AI Portfolio Assistant (Free, Local)
+**Goal**: A chat interface where users ask questions about their portfolio in plain English.
+
+What we build:
+- Install **Ollama** locally → download a model like `llama3.1:8b` (runs on CPU, ~4GB RAM)
+- LangChain SQL Agent connected to your PostgreSQL database
+- Chat endpoint: `POST /api/chat` → User sends a message, LangChain converts it to SQL, runs it, returns a human-readable answer
+- Example queries the AI can handle:
+  - *"What's my best performing stock?"*
+  - *"How much have I invested in mutual funds?"*
+  - *"Show me all orders I placed last week"*
+  - *"Which broker has the lowest commission rate?"*
+
+**Security maxxing**:
+- The LangChain agent uses a **read-only** database connection (separate from the main API)
+- SQL queries generated by the LLM are validated and sandboxed — no `DROP`, `DELETE`, or `UPDATE` allowed
+- The agent can only access data for the logged-in user's `investor_id`
+
+---
+
+### Step 6 (Future): LangGraph — Autonomous Agent Workflows
+**Goal**: Multi-step AI agents that can take action.
+
+This is the advanced step you add once everything else is stable:
+- **Portfolio Advisor**: Analyzes holdings → fetches market data → suggests rebalancing
+- **Conditional Order Agent**: *"Buy AAPL if it drops below 150"* → monitors and executes
+- **Report Generator**: Generates monthly portfolio reports as PDFs
+
+---
+
+## 5. When to Think About Cloud (Later)
+
+Only after you have a fully working local app:
+
+| Service | Free Tier Option |
+| :--- | :--- |
+| **Database hosting** | Supabase (500MB free), Neon (0.5GB free), or Railway |
+| **Backend hosting** | Railway (free tier), Render (free tier), or Fly.io |
+| **Frontend hosting** | Vercel (free for personal projects — perfect for Next.js) |
+| **AI API (if needed)** | Google Gemini API (free tier: 15 RPM), Groq (free tier) |
+
+> [!TIP]
+> Vercel + Supabase + Railway free tiers are more than enough to host a portfolio project for interviews and demos. Total cost: **$0**.
+
+---
+
+## 6. Recommended Build Order Summary
+
+```
+Step 1: FastAPI + DB Connection        ← Foundation (1-2 days)
+Step 2: Auth (JWT + bcrypt)            ← Security core (1-2 days)  
+Step 3: Portfolio & Trading Endpoints  ← Core features (2-3 days)
+Step 4: Next.js Frontend Dashboard     ← Visual wow factor (3-5 days)
+Step 5: LangChain + Ollama Chat        ← AI differentiator (2-3 days)
+Step 6: LangGraph Agents               ← Advanced showcase (3-5 days)
+───────────────────────────────────────
+Cloud deployment                       ← Only when ready to share
+```
+
+> [!IMPORTANT]
+> Each step produces a **working, demo-able product**. You don't need to finish all 6 steps to have something impressive. Even Steps 1-3 alone give you a secure, production-grade REST API backed by a properly designed database — that's already a strong portfolio project.

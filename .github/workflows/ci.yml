@@ -1,0 +1,86 @@
+name: StockVault CI — Database Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  database-tests:
+    name: PostgreSQL Schema & Logic Tests
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: stockvault
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      PGHOST: localhost
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: stockvault
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── Setup: Build the database ────────────────────────────
+      - name: Create schema and tables
+        run: psql -v ON_ERROR_STOP=1 -f database/schema/final_ddl.sql
+
+      - name: Load seed data
+        run: psql -v ON_ERROR_STOP=1 -f database/schema/seed_data.sql
+
+      - name: Create performance indexes
+        run: psql -v ON_ERROR_STOP=1 -f database/schema/indexes.sql
+
+      - name: Create views
+        run: psql -v ON_ERROR_STOP=1 -f database/schema/views.sql
+
+      - name: Create triggers and functions
+        run: psql -v ON_ERROR_STOP=1 -f database/schema/triggers_functions.sql
+
+      - name: Enable disabled triggers (post-seed)
+        run: |
+          psql -v ON_ERROR_STOP=1 <<'SQL'
+          SET search_path TO trading;
+          ALTER TABLE order_record ENABLE TRIGGER trg_validate_order;
+          ALTER TABLE trade ENABLE TRIGGER trg_trade_update_holdings;
+          ALTER TABLE trade ENABLE TRIGGER trg_trade_update_order_status;
+          ALTER TABLE trade ENABLE TRIGGER trg_trade_adjust_balance;
+          SQL
+
+      # ── Tests: Run the full test suite ───────────────────────
+      - name: "Test: Schema & Structure"
+        run: psql -v ON_ERROR_STOP=1 -f tests/test_schema.sql
+
+      - name: "Test: Constraint Enforcement"
+        run: psql -v ON_ERROR_STOP=1 -f tests/test_constraints.sql
+
+      - name: "Test: Trigger Logic"
+        run: psql -v ON_ERROR_STOP=1 -f tests/test_triggers.sql
+
+      - name: "Test: View Correctness"
+        run: psql -v ON_ERROR_STOP=1 -f tests/test_views.sql
+
+      - name: "Test: Index Existence"
+        run: psql -v ON_ERROR_STOP=1 -f tests/test_indexes.sql
+
+      - name: "Test: Seed Data Integrity"
+        run: psql -v ON_ERROR_STOP=1 -f tests/test_seed_data.sql
+
+      - name: "Test: Query Execution"
+        run: psql -v ON_ERROR_STOP=1 -f tests/test_queries.sql

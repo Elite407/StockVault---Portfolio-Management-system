@@ -1,0 +1,73 @@
+# Complete StockVault Dashboard Implementation
+
+This plan outlines the remaining work required to build the StockVault interactive dashboard, picking up from the progress tracked in `docs/tracker.md`. We will finish the remaining backend endpoints and then construct the React frontend.
+
+## User Review Required
+
+> [!IMPORTANT]
+> The backend currently has a basic structure with a few core routes (`/api/analytics`, `/api/schema`, `/api/sql`) completed. 
+> Before we proceed, please confirm if you want to complete all remaining backend analytics routes first, or if you prefer to set up the React frontend immediately so we can see the data visually on the screen.
+
+## Open Questions
+
+> [!WARNING]
+> 1. Do you have a specific color palette in mind for the Tailwind dark theme (e.g., standard slate/gray vs. blue-tinted financial theme)?
+> 2. For the SQL Playground security, is the basic string matching currently in `server.js` sufficient for local development, or do you want a more robust SQL parser to prevent SQL injection/mutations?
+
+## Proposed Changes
+
+### 1. Complete Phase 1: Backend Remaining Endpoints
+
+We need to add the missing analytics routes to `backend/server.js` to fuel the frontend charts:
+
+#### [MODIFY] [server.js](file:///d:/Project/StockVault/backend/server.js)
+- Add `GET /api/health`
+- Add `GET /api/analytics/risk-distribution` (Group investors by `RISK_PROFILE`)
+- Add `GET /api/analytics/top-securities` (Top 5 by holding value)
+- Add `GET /api/analytics/broker-performance` (Query `v_broker_performance`)
+- Add `GET /api/analytics/sector-allocation` (Group equities by sector)
+- Add `GET /api/schema/relationships` (Query `information_schema.key_column_usage` for ERD edges)
+- Add `GET /api/presets` (Return predefined SQL queries for the playground)
+
+#### [MODIFY] [package.json](file:///d:/Project/StockVault/backend/package.json)
+- Add `"dev": "nodemon server.js"` script.
+
+### 2. Phase 2: Frontend Foundation
+
+Initialize the frontend workspace and build the core UI components.
+
+#### [NEW] `d:\Project\StockVault\frontend\` (Directory)
+- Initialize Vite React project (`npm create vite@latest frontend -- --template react`)
+- Install TailwindCSS, `recharts`, `@monaco-editor/react`, `@xyflow/react`, `framer-motion`, and `lucide-react`.
+- Configure `tailwind.config.js` for the dark theme.
+- Create standard layout components (`Sidebar`, `GlassCard`, `StatCard`, `DataTable`).
+
+### 3. Phase 3: Feature Integration
+
+Wire the frontend components to the backend API.
+
+#### [NEW] `frontend/src/pages/Dashboard.jsx`
+- Fetch KPI metrics from `/api/analytics` and render `StatCard`s.
+- Render Recharts for risk distribution and broker performance.
+
+#### [NEW] `frontend/src/pages/SqlPlayground.jsx`
+- Embed Monaco editor.
+- Wire the "Run" button to `POST /api/sql`.
+- Display results in a dynamic `DataTable`.
+
+#### [NEW] `frontend/src/pages/SchemaExplorer.jsx`
+- Fetch `/api/schema` and `/api/schema/relationships`.
+- Render the ERD diagram using React Flow (`@xyflow/react`).
+
+### 4. Phase 4: Polish & Deploy
+- Add layout transitions using `framer-motion`.
+- Add loading skeletons and global error boundaries.
+
+## Verification Plan
+
+### Automated/Manual Tests
+- Run `npm run dev` in `backend` and `frontend` concurrently.
+- Verify `http://localhost:3000/api/health` returns `200 OK`.
+- Open `http://localhost:5173` in the browser and verify the Dashboard loads without console errors.
+- Test the SQL Playground by running a safe `SELECT` query and verifying the data table populates correctly.
+- Attempt to run an `INSERT` or `DROP` query in the playground and ensure it is rejected with a `403` error.
