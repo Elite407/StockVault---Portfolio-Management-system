@@ -43,7 +43,7 @@ BEGIN
     -- Holding days <= 365 must be STCG, > 365 must be LTCG
     -- ─────────────────────────────────────────────────────────────
     SELECT COUNT(*) INTO v_violations
-    FROM capital_gains_record
+    FROM v_capital_gains
     WHERE (holding_days <= 365 AND gain_type <> 'STCG')
        OR (holding_days > 365  AND gain_type <> 'LTCG');
 
@@ -54,16 +54,16 @@ BEGIN
 
     -- ─────────────────────────────────────────────────────────────
     -- 3. Capital Gains Arithmetic Invariant
-    -- gain_loss = (sell_price - buy_price) * quantity
+    -- gain_amount = (sell_price - buy_price) * quantity
     -- ─────────────────────────────────────────────────────────────
     SELECT COUNT(*) INTO v_violations
-    FROM capital_gains_record
-    WHERE ABS(gain_loss - ((sell_price - buy_price) * quantity)) > 0.01;
+    FROM v_capital_gains
+    WHERE ABS(gain_amount - ((sell_price - buy_price) * quantity)) > 0.01;
 
     IF v_violations > 0 THEN
-        RAISE EXCEPTION 'FAIL [FI-3]: % capital gains record(s) violate gain_loss formula', v_violations;
+        RAISE EXCEPTION 'FAIL [FI-3]: % capital gains record(s) violate gain_amount formula', v_violations;
     END IF;
-    RAISE NOTICE 'PASS [FI-3]: Capital gains gain_loss matches (sell_price - buy_price) * quantity';
+    RAISE NOTICE 'PASS [FI-3]: Capital gains gain_amount matches (sell_price - buy_price) * quantity';
 
     -- ─────────────────────────────────────────────────────────────
     -- 4. Regulatory KYC Invariant
