@@ -294,13 +294,13 @@ INSERT INTO trade (order_id, trade_ref, fill_price, filled_qty, trade_datetime, 
 (20, 'TRD-20260708-014', 2880.00,2000, NOW() - INTERVAL '30 days' + INTERVAL '11 minutes',2880.00, 576.00, 288.00, 5763744.00),
 
 -- Zenith trades
-(22, 'TRD-20260703-015', 1580.00, 800, NOW() - INTERVAL '35 days' + INTERVAL '6 minutes',  632.00, 126.40,  63.20, 1265221.60),
+(22, 'TRD-20260703-015', 1580.00, 800, NOW() - INTERVAL '35 days' + INTERVAL '6 minutes',  632.00, 126.40,  63.20, 1264821.60),
 
 -- Recent trades
 (27, 'TRD-20260804-016',  980.00, 200, NOW() - INTERVAL '3 days'  + INTERVAL '4 minutes',   98.00,  19.60,   9.80,  196127.40),
 (28, 'TRD-20260801-017',  135.00, 150, NOW() - INTERVAL '7 days'  + INTERVAL '14 minutes',  10.13,   2.03,   1.01,   20263.17),
 (29, 'TRD-20260803-018', 3850.00, 100, NOW() - INTERVAL '5 days'  + INTERVAL '6 minutes',  192.50,  38.50,  19.25,  385250.25),
-(30, 'TRD-20260729-019', 1150.00,  75, NOW() - INTERVAL '9 days'  + INTERVAL '18 minutes',  43.13,   8.63,   4.31,   86302.07);
+(30, 'TRD-20260729-019', 1150.00,  75, NOW() - INTERVAL '9 days'  + INTERVAL '18 minutes',  43.13,   8.63,   4.31,   86306.07);
 
 -- ─────────────────────────────────────────────────────────────
 -- 15. CAPITAL_GAINS_RECORD (1 record: Aarav SELL Reliance)
