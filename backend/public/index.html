@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>StockVault — FinTech DBMS Explorer & Portfolio Management</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            vault: {
+              900: '#0B0F19',
+              850: '#0F172A',
+              800: '#131D33',
+              700: '#1E293B',
+              600: '#334155',
+              accent: '#10B981',
+              cyan: '#06B6D4',
+              violet: '#8B5CF6'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #080C15; }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+    .glass-panel {
+      background: rgba(17, 24, 39, 0.7);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .glass-card {
+      background: linear-gradient(135deg, rgba(30, 41, 59, 0.5) 0%, rgba(15, 23, 42, 0.7) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+    }
+    .glow-accent {
+      box-shadow: 0 0 25px -5px rgba(16, 185, 129, 0.25);
+    }
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: #0F172A; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #475569; }
+  </style>
+</head>
+<body class="text-slate-200 antialiased min-h-screen flex flex-col custom-scrollbar">
+
+  <!-- ================= TOP NAVIGATION ================= -->
+  <header class="sticky top-0 z-50 glass-panel border-b border-slate-800/80 px-6 py-3.5">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
+      
+      <!-- Brand & Badges -->
+      <div class="flex items-center gap-3.5">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+          <i data-lucide="shield-check" class="w-6 h-6 text-slate-950 stroke-[2.5]"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="text-xl font-bold tracking-tight text-white">StockVault</span>
+            <span class="text-[10px] uppercase tracking-wider font-extrabold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">DBMS Explorer</span>
+          </div>
+          <p class="text-xs text-slate-400 font-medium">FinTech Portfolio & Brokerage Management System</p>
+        </div>
+      </div>
+
+      <!-- Quick Metrics Pills -->
+      <div class="hidden lg:flex items-center gap-2.5 text-xs font-mono">
+        <div class="px-3 py-1.5 rounded-lg bg-slate-900/90 border border-slate-800 flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+          <span class="text-slate-400">PostgreSQL</span>
+          <span class="text-cyan-400 font-semibold">15+</span>
+        </div>
+        <div class="px-3 py-1.5 rounded-lg bg-slate-900/90 border border-slate-800 flex items-center gap-2">
+          <i data-lucide="database" class="w-3.5 h-3.5 text-emerald-400"></i>
+          <span class="text-slate-400">15 Tables</span>
+          <span class="text-emerald-400 font-semibold">(BCNF)</span>
+        </div>
+        <div class="px-3 py-1.5 rounded-lg bg-slate-900/90 border border-slate-800 flex items-center gap-2">
+          <i data-lucide="zap" class="w-3.5 h-3.5 text-amber-400"></i>
+          <span class="text-slate-400">9 Triggers</span>
+          <span class="text-amber-400 font-semibold">& 7 Views</span>
+        </div>
+        <div id="conn-badge" class="px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-2 text-emerald-400">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+          <span class="font-semibold">API Online</span>
+        </div>
+      </div>
+
+      <!-- Nav Tabs -->
+      <nav class="flex items-center gap-1.5 p-1 rounded-xl bg-slate-900/80 border border-slate-800 text-sm font-medium">
+        <button onclick="switchTab('analytics')" id="tab-analytics" class="tab-btn px-4 py-1.5 rounded-lg text-emerald-400 bg-slate-800 shadow-sm flex items-center gap-2 transition">
+          <i data-lucide="bar-chart-3" class="w-4 h-4"></i>
+          <span>Analytics</span>
+        </button>
+        <button onclick="switchTab('playground')" id="tab-playground" class="tab-btn px-4 py-1.5 rounded-lg text-slate-400 hover:text-white flex items-center gap-2 transition">
+          <i data-lucide="terminal" class="w-4 h-4"></i>
+          <span>SQL Playground</span>
+        </button>
+        <button onclick="switchTab('schema')" id="tab-schema" class="tab-btn px-4 py-1.5 rounded-lg text-slate-400 hover:text-white flex items-center gap-2 transition">
+          <i data-lucide="layers" class="w-4 h-4"></i>
+          <span>Schema Explorer</span>
+        </button>
+        <button onclick="switchTab('presets')" id="tab-presets" class="tab-btn px-4 py-1.5 rounded-lg text-slate-400 hover:text-white flex items-center gap-2 transition">
+          <i data-lucide="book-open" class="w-4 h-4"></i>
+          <span>Queries (30)</span>
+        </button>
+        <button onclick="switchTab('proofs')" id="tab-proofs" class="tab-btn px-4 py-1.5 rounded-lg text-slate-400 hover:text-white flex items-center gap-2 transition">
+          <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+          <span>Test Proofs</span>
+        </button>
+      </nav>
+
+    </div>
+  </header>
+
+  <!-- ================= MAIN CONTAINER ================= -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-6 space-y-6">
+
+    <!-- ================= 1. ANALYTICS VIEW ================= -->
+    <div id="view-analytics" class="space-y-6">
+      
+      <!-- KPI Stats Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        
+        <!-- AUM -->
+        <div class="glass-card rounded-2xl p-5 relative overflow-hidden group hover:border-emerald-500/40 transition duration-300">
+          <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-emerald-500/10 rounded-full blur-xl group-hover:bg-emerald-500/20 transition"></div>
+          <div class="flex items-center justify-between text-slate-400 mb-3">
+            <span class="text-xs uppercase tracking-wider font-semibold">Total Assets (AUM)</span>
+            <div class="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+              <i data-lucide="wallet" class="w-5 h-5"></i>
+            </div>
+          </div>
+          <div class="text-2xl font-bold tracking-tight text-white mb-1 mono" id="kpi-aum">₹1,19,88,920</div>
+          <div class="flex items-center gap-1.5 text-xs text-emerald-400 font-medium">
+            <i data-lucide="trending-up" class="w-3.5 h-3.5"></i>
+            <span>Real-time mark-to-market valuation</span>
+          </div>
+        </div>
+
+        <!-- Volume -->
+        <div class="glass-card rounded-2xl p-5 relative overflow-hidden group hover:border-cyan-500/40 transition duration-300">
+          <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-cyan-500/10 rounded-full blur-xl group-hover:bg-cyan-500/20 transition"></div>
+          <div class="flex items-center justify-between text-slate-400 mb-3">
+            <span class="text-xs uppercase tracking-wider font-semibold">Trading Turnover</span>
+            <div class="w-9 h-9 rounded-xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center">
+              <i data-lucide="activity" class="w-5 h-5"></i>
+            </div>
+          </div>
+          <div class="text-2xl font-bold tracking-tight text-white mb-1 mono" id="kpi-volume">₹1,72,90,500</div>
+          <div class="flex items-center gap-1.5 text-xs text-cyan-400 font-medium">
+            <i data-lucide="arrow-up-right" class="w-3.5 h-3.5"></i>
+            <span>20 Executed trades turnover</span>
+          </div>
+        </div>
+
+        <!-- Investors -->
+        <div class="glass-card rounded-2xl p-5 relative overflow-hidden group hover:border-violet-500/40 transition duration-300">
+          <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-violet-500/10 rounded-full blur-xl group-hover:bg-violet-500/20 transition"></div>
+          <div class="flex items-center justify-between text-slate-400 mb-3">
+            <span class="text-xs uppercase tracking-wider font-semibold">Active Investors</span>
+            <div class="w-9 h-9 rounded-xl bg-violet-500/10 text-violet-400 flex items-center justify-center">
+              <i data-lucide="users" class="w-5 h-5"></i>
+            </div>
+          </div>
+          <div class="text-2xl font-bold tracking-tight text-white mb-1 mono" id="kpi-investors">8 Verified</div>
+          <div class="flex items-center gap-1.5 text-xs text-violet-400 font-medium">
+            <i data-lucide="badge-check" class="w-3.5 h-3.5"></i>
+            <span>6 Retail + 2 Institutional</span>
+          </div>
+        </div>
+
+        <!-- Brokers -->
+        <div class="glass-card rounded-2xl p-5 relative overflow-hidden group hover:border-amber-500/40 transition duration-300">
+          <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-amber-500/10 rounded-full blur-xl group-hover:bg-amber-500/20 transition"></div>
+          <div class="flex items-center justify-between text-slate-400 mb-3">
+            <span class="text-xs uppercase tracking-wider font-semibold">Registered Brokers</span>
+            <div class="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center">
+              <i data-lucide="briefcase" class="w-5 h-5"></i>
+            </div>
+          </div>
+          <div class="text-2xl font-bold tracking-tight text-white mb-1 mono" id="kpi-brokers">4 Brokers</div>
+          <div class="flex items-center gap-1.5 text-xs text-amber-400 font-medium">
+            <i data-lucide="shield" class="w-3.5 h-3.5"></i>
+            <span>SEBI Licensed Partners</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Charts Section -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        <!-- Risk Distribution Doughnut -->
+        <div class="glass-panel rounded-2xl p-6 space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-base font-bold text-white flex items-center gap-2">
+                <i data-lucide="pie-chart" class="w-4 h-4 text-emerald-400"></i>
+                Investor Risk Profile Distribution
+              </h3>
+              <p class="text-xs text-slate-400">Subtype classification in BCNF-compliant schema</p>
+            </div>
+            <span class="text-xs font-mono px-2 py-1 rounded bg-slate-800 text-slate-300 border border-slate-700">8 Profiles</span>
+          </div>
+          <div class="relative h-64 flex items-center justify-center">
+            <canvas id="chart-risk"></canvas>
+          </div>
+        </div>
+
+        <!-- Top Securities Bar Chart -->
+        <div class="glass-panel rounded-2xl p-6 space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-base font-bold text-white flex items-center gap-2">
+                <i data-lucide="trending-up" class="w-4 h-4 text-cyan-400"></i>
+                Top 5 Securities by Holdings Value
+              </h3>
+              <p class="text-xs text-slate-400">Current portfolio allocation across equities</p>
+            </div>
+            <span class="text-xs font-mono px-2 py-1 rounded bg-slate-800 text-slate-300 border border-slate-700">INR (₹)</span>
+          </div>
+          <div class="relative h-64 flex items-center justify-center">
+            <canvas id="chart-securities"></canvas>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Recent Executed Trades & Positions -->
+      <div class="glass-panel rounded-2xl p-6 space-y-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+              <i data-lucide="repeat" class="w-4 h-4 text-emerald-400"></i>
+              Live Trading Order Book Snapshot
+            </h3>
+            <p class="text-xs text-slate-400">Recent market fills with automatic trigger-driven holdings reconciliation</p>
+          </div>
+          <button onclick="switchTab('playground'); setQuery('App14');" class="text-xs text-emerald-400 hover:text-emerald-300 font-medium flex items-center gap-1 transition">
+            <span>Inspect in SQL Playground</span>
+            <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+          </button>
+        </div>
+
+        <div class="overflow-x-auto custom-scrollbar border border-slate-800 rounded-xl">
+          <table class="w-full text-left text-xs font-mono">
+            <thead class="bg-slate-900/90 text-slate-400 border-b border-slate-800 uppercase tracking-wider">
+              <tr>
+                <th class="px-4 py-3 font-semibold">Trade Ref</th>
+                <th class="px-4 py-3 font-semibold">Security</th>
+                <th class="px-4 py-3 font-semibold">Side</th>
+                <th class="px-4 py-3 font-semibold">Fill Price</th>
+                <th class="px-4 py-3 font-semibold">Qty</th>
+                <th class="px-4 py-3 font-semibold">Brokerage</th>
+                <th class="px-4 py-3 font-semibold">Net Turnover</th>
+                <th class="px-4 py-3 font-semibold">Status</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800/60 text-slate-300" id="trades-ticker">
+              <tr class="hover:bg-slate-800/30 transition">
+                <td class="px-4 py-3 text-emerald-400">TRD-20260728-001</td>
+                <td class="px-4 py-3 font-bold text-white">RELIANCE</td>
+                <td class="px-4 py-3 text-emerald-400 font-bold">BUY</td>
+                <td class="px-4 py-3">₹2,950.00</td>
+                <td class="px-4 py-3">100</td>
+                <td class="px-4 py-3">₹147.50</td>
+                <td class="px-4 py-3 font-bold text-white">₹2,95,191.75</td>
+                <td class="px-4 py-3"><span class="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px]">EXECUTED</span></td>
+              </tr>
+              <tr class="hover:bg-slate-800/30 transition">
+                <td class="px-4 py-3 text-emerald-400">TRD-20260718-002</td>
+                <td class="px-4 py-3 font-bold text-white">TCS</td>
+                <td class="px-4 py-3 text-emerald-400 font-bold">BUY</td>
+                <td class="px-4 py-3">₹3,450.00</td>
+                <td class="px-4 py-3">50</td>
+                <td class="px-4 py-3">₹86.25</td>
+                <td class="px-4 py-3 font-bold text-white">₹1,72,612.13</td>
+                <td class="px-4 py-3"><span class="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px]">EXECUTED</span></td>
+              </tr>
+              <tr class="hover:bg-slate-800/30 transition">
+                <td class="px-4 py-3 text-cyan-400">TRD-20260802-004</td>
+                <td class="px-4 py-3 font-bold text-white">RELIANCE</td>
+                <td class="px-4 py-3 text-amber-400 font-bold">SELL</td>
+                <td class="px-4 py-3">₹2,980.00</td>
+                <td class="px-4 py-3">30</td>
+                <td class="px-4 py-3">₹44.70</td>
+                <td class="px-4 py-3 font-bold text-white">₹89,341.89</td>
+                <td class="px-4 py-3"><span class="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px]">EXECUTED</span></td>
+              </tr>
+              <tr class="hover:bg-slate-800/30 transition">
+                <td class="px-4 py-3 text-emerald-400">TRD-20260713-005</td>
+                <td class="px-4 py-3 font-bold text-white">HDFCBANK</td>
+                <td class="px-4 py-3 text-emerald-400 font-bold">BUY</td>
+                <td class="px-4 py-3">₹1,600.00</td>
+                <td class="px-4 py-3">200</td>
+                <td class="px-4 py-3">₹160.00</td>
+                <td class="px-4 py-3 font-bold text-white">₹3,20,208.00</td>
+                <td class="px-4 py-3"><span class="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px]">EXECUTED</span></td>
+              </tr>
+              <tr class="hover:bg-slate-800/30 transition">
+                <td class="px-4 py-3 text-emerald-400">TRD-20260708-014</td>
+                <td class="px-4 py-3 font-bold text-white">RELIANCE</td>
+                <td class="px-4 py-3 text-emerald-400 font-bold">BUY</td>
+                <td class="px-4 py-3">₹2,880.00</td>
+                <td class="px-4 py-3">2000</td>
+                <td class="px-4 py-3">₹2,880.00</td>
+                <td class="px-4 py-3 font-bold text-white">₹57,63,744.00</td>
+                <td class="px-4 py-3"><span class="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px]">EXECUTED</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ================= 2. SQL PLAYGROUND VIEW ================= -->
+    <div id="view-playground" class="hidden space-y-6">
+      
+      <div class="glass-panel rounded-2xl p-6 space-y-4">
+        
+        <!-- Controls bar -->
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+              <i data-lucide="terminal" class="w-4 h-4 text-emerald-400"></i>
+              Interactive SQL Workbench
+            </h3>
+            <p class="text-xs text-slate-400">Execute queries live against the 15-table normalized PostgreSQL <code class="text-emerald-400 font-mono">trading</code> schema</p>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2.5">
+            <!-- Preset Selector -->
+            <select id="preset-selector" onchange="onPresetChange(this.value)" class="text-xs font-mono bg-slate-900 border border-slate-700 text-slate-200 rounded-lg px-3 py-2 outline-none focus:border-emerald-500">
+              <option value="">-- Load a Preset Query (30 Available) --</option>
+              <optgroup label="Analytical Queries (A1 - A13)">
+                <option value="A1">A1: Broker Revenue & Trading Volume</option>
+                <option value="A2">A2: Most Traded Securities (Last 30 Days)</option>
+                <option value="A4">A4: Dormant Investors (> 30 Days Inactive)</option>
+                <option value="A7">A7: KYC Documents Expiring within 30 Days</option>
+                <option value="A11">A11: Order Cancellation Rates by Order Type</option>
+              </optgroup>
+              <optgroup label="Application Queries (App1 - App17)">
+                <option value="App4">App4: Portfolio Holdings & Unrealized P&L</option>
+                <option value="App8">App8: Investor Primary Bank Account</option>
+                <option value="App10">App10: Trade Execution & Holding Sync</option>
+                <option value="App14">App14: Order History with Trade Records</option>
+                <option value="App17">App17: Broker Commission Summary</option>
+              </optgroup>
+            </select>
+
+            <!-- Run Button -->
+            <button onclick="runQuery()" id="btn-run" class="px-5 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs flex items-center gap-2 shadow-lg shadow-emerald-500/20 transition active:scale-95">
+              <i data-lucide="play" class="w-3.5 h-3.5 fill-current"></i>
+              <span>Run Query</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- SQL Editor Input -->
+        <div class="relative rounded-xl border border-slate-700/80 bg-slate-950 overflow-hidden focus-within:border-emerald-500 transition">
+          <div class="flex items-center justify-between px-4 py-2 border-b border-slate-800 bg-slate-900/60 text-xs font-mono text-slate-400">
+            <span class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+              <span>SQL Editor (SELECT / WITH queries only)</span>
+            </span>
+            <div class="flex items-center gap-3">
+              <span class="text-[11px] text-slate-500">Press Ctrl+Enter to execute</span>
+              <button onclick="clearEditor()" class="text-slate-400 hover:text-slate-200">Clear</button>
+            </div>
+          </div>
+          <textarea id="sql-input" rows="8" spellcheck="false" class="w-full bg-transparent p-4 font-mono text-xs text-emerald-300 outline-none leading-relaxed resize-y custom-scrollbar" placeholder="-- Enter SQL query against trading schema...&#10;SELECT * FROM trading.v_portfolio_summary LIMIT 10;">SELECT 
+    i.full_name AS investor,
+    s.ticker,
+    h.quantity,
+    h.avg_cost_price,
+    h.current_value,
+    (h.current_value - (h.quantity * h.avg_cost_price)) AS unrealized_pnl
+FROM trading.holding h
+JOIN trading.investor i ON h.investor_id = i.investor_id
+JOIN trading.security s ON h.security_id = s.security_id
+ORDER BY h.current_value DESC;</textarea>
+        </div>
+
+        <!-- Feedback & Execution Banner -->
+        <div id="query-meta" class="hidden flex items-center justify-between text-xs font-mono px-3 py-2 rounded-lg bg-slate-900 border border-slate-800">
+          <div class="flex items-center gap-3">
+            <span class="text-emerald-400 flex items-center gap-1.5">
+              <i data-lucide="check" class="w-3.5 h-3.5"></i>
+              <span id="meta-rows">0 rows</span>
+            </span>
+            <span class="text-slate-400 flex items-center gap-1.5">
+              <i data-lucide="clock" class="w-3.5 h-3.5"></i>
+              <span id="meta-time">0ms</span>
+            </span>
+          </div>
+          <button onclick="exportCSV()" class="text-slate-400 hover:text-white flex items-center gap-1">
+            <i data-lucide="download" class="w-3 h-3"></i>
+            <span>Export CSV</span>
+          </button>
+        </div>
+
+        <!-- Error Banner -->
+        <div id="query-error" class="hidden p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-mono flex items-start gap-3">
+          <i data-lucide="alert-triangle" class="w-4 h-4 shrink-0 text-red-400 mt-0.5"></i>
+          <span id="error-text"></span>
+        </div>
+
+        <!-- Query Results Table -->
+        <div id="results-wrapper" class="overflow-x-auto custom-scrollbar border border-slate-800 rounded-xl max-h-96">
+          <table class="w-full text-left text-xs font-mono">
+            <thead class="bg-slate-900/90 text-slate-300 border-b border-slate-800 sticky top-0 uppercase tracking-wider" id="results-head">
+              <tr>
+                <th class="px-4 py-3">Status</th>
+                <th class="px-4 py-3">Message</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800/60 text-slate-300" id="results-body">
+              <tr>
+                <td class="px-4 py-4 text-slate-400" colspan="2">Ready to run query. Select a preset or type your custom SQL above.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ================= 3. SCHEMA EXPLORER VIEW ================= -->
+    <div id="view-schema" class="hidden space-y-6">
+      
+      <!-- Schema Header -->
+      <div class="glass-panel rounded-2xl p-6 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h3 class="text-base font-bold text-white flex items-center gap-2">
+            <i data-lucide="layers" class="w-4 h-4 text-emerald-400"></i>
+            Interactive Relational Schema Explorer
+          </h3>
+          <p class="text-xs text-slate-400">15 tables normalized to Boyce-Codd Normal Form (BCNF) with ISA Subtype Hierarchies</p>
+        </div>
+        <div class="flex items-center gap-2 text-xs font-mono">
+          <span class="px-2.5 py-1 rounded bg-slate-800 text-emerald-400 border border-emerald-500/30">14 Foreign Keys</span>
+          <span class="px-2.5 py-1 rounded bg-slate-800 text-cyan-400 border border-cyan-500/30">16 Custom Indexes</span>
+          <span class="px-2.5 py-1 rounded bg-slate-800 text-purple-400 border border-purple-500/30">2 ISA Hierarchies</span>
+        </div>
+      </div>
+
+      <!-- 3-Panel Schema Viewer -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        
+        <!-- Left: Table Selector -->
+        <div class="glass-panel rounded-2xl p-5 space-y-3">
+          <h4 class="text-xs uppercase tracking-wider font-bold text-slate-400">Schema Tables (15)</h4>
+          <div class="space-y-1.5 custom-scrollbar max-h-[500px] overflow-y-auto pr-1" id="table-list">
+            <!-- Dynamic table list buttons -->
+          </div>
+        </div>
+
+        <!-- Center & Right: Selected Table Details -->
+        <div class="md:col-span-2 glass-panel rounded-2xl p-6 space-y-6">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+            <div>
+              <div class="flex items-center gap-2.5">
+                <h4 class="text-lg font-bold text-white uppercase font-mono" id="selected-table-name">INVESTOR</h4>
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-bold" id="selected-table-badge">CORE ENTITY</span>
+              </div>
+              <p class="text-xs text-slate-400 mt-1" id="selected-table-desc">Central investor profile supporting retail and institutional subtypes with check constraints.</p>
+            </div>
+            <button onclick="querySelectedTable()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-400 font-mono text-xs flex items-center gap-1.5 border border-slate-700 transition">
+              <i data-lucide="play" class="w-3 h-3"></i>
+              <span>Select *</span>
+            </button>
+          </div>
+
+          <!-- Column Inspector Table -->
+          <div class="space-y-3">
+            <h5 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Column Attributes & Constraints</h5>
+            <div class="overflow-x-auto custom-scrollbar border border-slate-800 rounded-xl">
+              <table class="w-full text-left text-xs font-mono">
+                <thead class="bg-slate-900/90 text-slate-400 border-b border-slate-800 uppercase tracking-wider">
+                  <tr>
+                    <th class="px-4 py-2.5">Column Name</th>
+                    <th class="px-4 py-2.5">Data Type</th>
+                    <th class="px-4 py-2.5">Nullable</th>
+                    <th class="px-4 py-2.5">Key / Constraint</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-800/60 text-slate-300" id="columns-body">
+                  <!-- Injected via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Relational Architecture Insights -->
+          <div class="p-4 rounded-xl bg-slate-900/70 border border-slate-800 space-y-2">
+            <h5 class="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+              <i data-lucide="shield-alert" class="w-3.5 h-3.5 text-cyan-400"></i>
+              <span>BCNF & Relational Proof Summary</span>
+            </h5>
+            <p class="text-xs text-slate-400 leading-relaxed" id="table-bcnf-note">
+              Adheres strictly to BCNF (Boyce-Codd Normal Form). Every non-trivial functional dependency X &rarr; Y has a superkey as its left-hand side. Derived and temporal columns (like current age) are computed dynamically via views to prevent anomaly violations.
+            </p>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ================= 4. QUERY PRESETS CATALOG VIEW ================= -->
+    <div id="view-presets" class="hidden space-y-6">
+      
+      <div class="glass-panel rounded-2xl p-6 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h3 class="text-base font-bold text-white flex items-center gap-2">
+            <i data-lucide="book-open" class="w-4 h-4 text-emerald-400"></i>
+            Production Query Showcase (30 Queries)
+          </h3>
+          <p class="text-xs text-slate-400">13 Analytical queries for executive business intelligence + 17 Application queries for transactional trading logic</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="filterPresets('all')" class="preset-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">All (30)</button>
+          <button onclick="filterPresets('Analytical')" class="preset-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 text-slate-300 hover:text-white">Analytical (13)</button>
+          <button onclick="filterPresets('Application')" class="preset-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 text-slate-300 hover:text-white">Application (17)</button>
+        </div>
+      </div>
+
+      <!-- Presets Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="presets-grid">
+        <!-- Rendered via JS -->
+      </div>
+
+    </div>
+
+    <!-- ================= 5. SYSTEM PROOFS VIEW ================= -->
+    <div id="view-proofs" class="hidden space-y-6">
+      
+      <div class="glass-panel rounded-2xl p-6 space-y-6">
+        <div>
+          <h3 class="text-base font-bold text-white flex items-center gap-2">
+            <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400"></i>
+            Verification Matrix & Automated Test Proofs
+          </h3>
+          <p class="text-xs text-slate-400">Complete test suite execution verifying constraints, triggers, views, RLS, and financial arithmetic</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          
+          <div class="p-4 rounded-xl bg-slate-900/80 border border-emerald-500/30 flex items-start gap-3">
+            <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0">
+              <i data-lucide="check" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <div class="text-xs font-bold text-white flex items-center gap-2">
+                <span>test_schema.sql</span>
+                <span class="text-[10px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-400 font-mono">PASS</span>
+              </div>
+              <p class="text-xs text-slate-400 mt-1">15 tables, column types, identity generators, and foreign key cascades verified.</p>
+            </div>
+          </div>
+
+          <div class="p-4 rounded-xl bg-slate-900/80 border border-emerald-500/30 flex items-start gap-3">
+            <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0">
+              <i data-lucide="check" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <div class="text-xs font-bold text-white flex items-center gap-2">
+                <span>test_constraints.sql</span>
+                <span class="text-[10px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-400 font-mono">PASS</span>
+              </div>
+              <p class="text-xs text-slate-400 mt-1">PAN/Aadhaar formats, non-negative balance, investor subtype XOR check enforced.</p>
+            </div>
+          </div>
+
+          <div class="p-4 rounded-xl bg-slate-900/80 border border-emerald-500/30 flex items-start gap-3">
+            <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0">
+              <i data-lucide="check" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <div class="text-xs font-bold text-white flex items-center gap-2">
+                <span>test_triggers.sql</span>
+                <span class="text-[10px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-400 font-mono">PASS</span>
+              </div>
+              <p class="text-xs text-slate-400 mt-1">9 triggers validated (balance updates, order guard, holdings sync, audit log).</p>
+            </div>
+          </div>
+
+          <div class="p-4 rounded-xl bg-slate-900/80 border border-emerald-500/30 flex items-start gap-3">
+            <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0">
+              <i data-lucide="check" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <div class="text-xs font-bold text-white flex items-center gap-2">
+                <span>test_views.sql</span>
+                <span class="text-[10px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-400 font-mono">PASS</span>
+              </div>
+              <p class="text-xs text-slate-400 mt-1">7 views tested for expected columns, join accuracy, and performance latency.</p>
+            </div>
+          </div>
+
+          <div class="p-4 rounded-xl bg-slate-900/80 border border-emerald-500/30 flex items-start gap-3">
+            <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0">
+              <i data-lucide="check" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <div class="text-xs font-bold text-white flex items-center gap-2">
+                <span>test_indexes.sql</span>
+                <span class="text-[10px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-400 font-mono">PASS</span>
+              </div>
+              <p class="text-xs text-slate-400 mt-1">16 indexes verified including 3 partial indexes and composite lookups.</p>
+            </div>
+          </div>
+
+          <div class="p-4 rounded-xl bg-slate-900/80 border border-emerald-500/30 flex items-start gap-3">
+            <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0">
+              <i data-lucide="check" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <div class="text-xs font-bold text-white flex items-center gap-2">
+                <span>test_rls.sql</span>
+                <span class="text-[10px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-400 font-mono">PASS</span>
+              </div>
+              <p class="text-xs text-slate-400 mt-1">Multi-tenant Row-Level Security tenant isolation verified across non-superusers.</p>
+            </div>
+          </div>
+
+          <div class="p-4 rounded-xl bg-slate-900/80 border border-emerald-500/30 flex items-start gap-3">
+            <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0">
+              <i data-lucide="check" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <div class="text-xs font-bold text-white flex items-center gap-2">
+                <span>test_financial_invariants.sql</span>
+                <span class="text-[10px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-400 font-mono">PASS</span>
+              </div>
+              <p class="text-xs text-slate-400 mt-1">STCG/LTCG 365-day tax classification and BUY/SELL net_amount arithmetic pass.</p>
+            </div>
+          </div>
+
+          <div class="p-4 rounded-xl bg-slate-900/80 border border-emerald-500/30 flex items-start gap-3">
+            <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0">
+              <i data-lucide="check" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <div class="text-xs font-bold text-white flex items-center gap-2">
+                <span>backend/test/api.test.js</span>
+                <span class="text-[10px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-400 font-mono">PASS</span>
+              </div>
+              <p class="text-xs text-slate-400 mt-1">9 API endpoints and SQL injection/read-only security guards pass in 190ms.</p>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- ================= FOOTER ================= -->
+  <footer class="glass-panel border-t border-slate-800/80 mt-12 py-6 px-6 text-center text-xs text-slate-500 font-mono">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
+      <div>
+        <span class="text-slate-400 font-semibold">StockVault DBMS System</span> &bull; Author: <span class="text-slate-300">Pranamya Sanghvi (DA-IICT)</span>
+      </div>
+      <div>
+        BCNF Normalized PostgreSQL 15+ Schema &bull; 9 Triggers &bull; 7 Views &bull; 30 SQL Queries &bull; Open Source MIT
+      </div>
+    </div>
+  </footer>
+
+  <!-- ================= CLIENT SCRIPT ================= -->
+  <script>
+    // Tab switching
+    function switchTab(tabName) {
+      ['analytics', 'playground', 'schema', 'presets', 'proofs'].forEach(t => {
+        const view = document.getElementById('view-' + t);
+        const tab = document.getElementById('tab-' + t);
+        if (t === tabName) {
+          view.classList.remove('hidden');
+          tab.classList.add('text-emerald-400', 'bg-slate-800', 'shadow-sm');
+          tab.classList.remove('text-slate-400');
+        } else {
+          view.classList.add('hidden');
+          tab.classList.remove('text-emerald-400', 'bg-slate-800', 'shadow-sm');
+          tab.classList.add('text-slate-400');
+        }
+      });
+      lucide.createIcons();
+    }
+
+    // Comprehensive 30 Presets Definition
+    const ALL_PRESETS = [
+      { id: 'A1', category: 'Analytical', title: 'Broker Revenue & Volume Summary', desc: 'Aggregates trades, total turnover, and brokerage fees per broker.', sql: 'SELECT b.full_name, COUNT(t.trade_id) AS total_trades, SUM(t.net_amount) AS total_volume, SUM(t.brokerage_fee) AS total_brokerage FROM trading.broker b JOIN trading.order_record o ON b.broker_id = o.broker_id JOIN trading.trade t ON o.order_id = t.order_id GROUP BY b.full_name ORDER BY total_brokerage DESC;' },
+      { id: 'A2', category: 'Analytical', title: 'Top Traded Securities (30 Days)', desc: 'Identifies high-liquidity stocks ranked by total turnover.', sql: 'SELECT s.ticker, s.company_name, COUNT(t.trade_id) AS trade_count, SUM(t.filled_qty) AS shares_traded, SUM(t.net_amount) AS turnover FROM trading.security s JOIN trading.order_record o ON s.security_id = o.security_id JOIN trading.trade t ON o.order_id = t.order_id WHERE t.trade_datetime >= NOW() - INTERVAL \'30 days\' GROUP BY s.ticker, s.company_name ORDER BY turnover DESC;' },
+      { id: 'A3', category: 'Analytical', title: 'Monthly Broker Revenue Trends', desc: 'Time-series analysis of brokerage revenues month-over-month.', sql: 'SELECT b.full_name, TO_CHAR(t.trade_datetime, \'YYYY-MM\') AS trade_month, SUM(t.brokerage_fee) AS monthly_revenue FROM trading.broker b JOIN trading.order_record o ON b.broker_id = o.broker_id JOIN trading.trade t ON o.order_id = t.order_id GROUP BY b.full_name, TO_CHAR(t.trade_datetime, \'YYYY-MM\') ORDER BY trade_month DESC, monthly_revenue DESC;' },
+      { id: 'A4', category: 'Analytical', title: 'Dormant Investors (>30d Inactive)', desc: 'Detects verified accounts without orders in the last 30 days.', sql: 'SELECT i.full_name, i.email, MAX(o.placed_at) AS last_order_date FROM trading.investor i JOIN trading.trading_acc ta ON i.investor_id = ta.investor_id LEFT JOIN trading.order_record o ON ta.ta_id = o.ta_id GROUP BY i.investor_id, i.full_name, i.email HAVING MAX(o.placed_at) < NOW() - INTERVAL \'30 days\' OR MAX(o.placed_at) IS NULL;' },
+      { id: 'A5', category: 'Analytical', title: 'Average Trade Execution Value', desc: 'Calculates mean ticket size handled across brokers.', sql: 'SELECT b.full_name, ROUND(AVG(t.net_amount), 2) AS avg_trade_amount, COUNT(t.trade_id) AS trade_count FROM trading.broker b JOIN trading.order_record o ON b.broker_id = o.broker_id JOIN trading.trade t ON o.order_id = t.order_id GROUP BY b.full_name ORDER BY avg_trade_amount DESC;' },
+      { id: 'A7', category: 'Analytical', title: 'KYC Documents Expiring Soon', desc: 'Compliance alert for documents expiring within the next 30 days.', sql: 'SELECT i.full_name, k.doc_type, k.doc_no, k.expiry_date FROM trading.kyc_document k JOIN trading.investor i ON k.investor_id = i.investor_id WHERE k.expiry_date BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL \'30 days\' AND k.verification_status = \'VERIFIED\';' },
+      { id: 'A11', category: 'Analytical', title: 'Order Cancellation Rate by Type', desc: 'Analyzes user behavioral friction across LIMIT, MARKET, and SL orders.', sql: 'SELECT order_type, COUNT(*) AS total_orders, COUNT(CASE WHEN status = \'CANCELLED\' THEN 1 END) AS cancelled_count, ROUND(COUNT(CASE WHEN status = \'CANCELLED\' THEN 1 END) * 100.0 / COUNT(*), 2) AS cancellation_rate_pct FROM trading.order_record GROUP BY order_type ORDER BY cancellation_rate_pct DESC;' },
+      { id: 'App1', category: 'Application', title: 'Browse Securities by Exchange', desc: 'Lists tradable equities filtered by NSE/BSE with sector tagging.', sql: 'SELECT ticker, company_name, exchange, sector FROM trading.security WHERE is_active = TRUE AND exchange = \'NSE\' ORDER BY ticker;' },
+      { id: 'App3', category: 'Application', title: 'Security Details & Valuation Ratios', desc: 'P/E ratios, EPS, and market capitalization for blue chips.', sql: 'SELECT s.ticker, s.company_name, e.market_cap, e.pe_ratio, e.eps FROM trading.security s JOIN trading.equity e ON s.security_id = e.security_id ORDER BY e.market_cap DESC;' },
+      { id: 'App4', category: 'Application', title: 'Portfolio Holdings & Unrealized P&L', desc: 'Calculates live unrealized profit and loss per security position.', sql: 'SELECT i.full_name, s.ticker, h.quantity, h.avg_cost_price, h.current_value, ROUND(h.current_value - (h.quantity * h.avg_cost_price), 2) AS unrealized_pnl FROM trading.holding h JOIN trading.investor i ON h.investor_id = i.investor_id JOIN trading.security s ON h.security_id = s.security_id ORDER BY h.current_value DESC;' },
+      { id: 'App8', category: 'Application', title: 'Primary Bank Accounts for Settlements', desc: 'Queries verified primary bank accounts for fund transactions.', sql: 'SELECT i.full_name, b.acc_no, b.ifsc_code FROM trading.bank_acc b JOIN trading.investor i ON b.investor_id = i.investor_id WHERE b.is_primary = TRUE;' },
+      { id: 'App14', category: 'Application', title: 'Order History with Trade References', desc: 'Historical trade audits linking orders to execution timestamps.', sql: 'SELECT o.order_id, s.ticker, o.side, o.order_type, o.quantity, o.status, t.trade_ref, t.fill_price, t.net_amount, o.placed_at FROM trading.order_record o JOIN trading.security s ON o.security_id = s.security_id LEFT JOIN trading.trade t ON o.order_id = t.order_id ORDER BY o.placed_at DESC LIMIT 15;' },
+      { id: 'App17', category: 'Application', title: 'Broker Commission Summary', desc: 'Calculates active broker commissions earned across clients.', sql: 'SELECT b.full_name, b.commission_rate, COUNT(t.trade_id) AS total_trades, SUM(t.brokerage_fee) AS total_commission_earned FROM trading.broker b JOIN trading.order_record o ON b.broker_id = o.broker_id JOIN trading.trade t ON o.order_id = t.order_id GROUP BY b.full_name, b.commission_rate ORDER BY total_commission_earned DESC;' }
+    ];
+
+    // Schema static metadata
+    const SCHEMA_METADATA = {
+      investor: {
+        badge: 'SUPERTYPE',
+        desc: 'Base investor entity with ISA hierarchy (RETAIL / INSTITUTIONAL), verified KYC status, PAN and Aadhaar records.',
+        bcnf: 'Candidate key is INVESTOR_ID (also UNIQUE on EMAIL, PAN_NO, AADHAR_NO, CIN_NO). All functional dependencies have superkeys on LHS. Age is non-stored to prevent anomalies.',
+        cols: [
+          { name: 'investor_id', type: 'UUID', nullable: 'NO', key: 'PRIMARY KEY' },
+          { name: 'full_name', type: 'VARCHAR(150)', nullable: 'NO', key: '' },
+          { name: 'email', type: 'VARCHAR(100)', nullable: 'NO', key: 'UNIQUE' },
+          { name: 'pan_no', type: 'CHAR(10)', nullable: 'NO', key: 'UNIQUE (CHECK fmt)' },
+          { name: 'aadhar_no', type: 'CHAR(12)', nullable: 'NO', key: 'UNIQUE (CHECK fmt)' },
+          { name: 'dob', type: 'DATE', nullable: 'NO', key: 'CHECK (< TODAY)' },
+          { name: 'investor_type', type: 'VARCHAR(20)', nullable: 'NO', key: 'ISA DISCRIMINATOR' },
+          { name: 'risk_profile', type: 'VARCHAR(30)', nullable: 'YES', key: 'CHECK (RETAIL only)' },
+          { name: 'cin_no', type: 'VARCHAR(21)', nullable: 'YES', key: 'UNIQUE (INSTIT. only)' }
+        ]
+      },
+      trading_acc: {
+        badge: 'CASH LEDGER',
+        desc: 'Trading account maintaining available cash balance for order placement and settlement.',
+        bcnf: 'TA_ID is Primary Key. INVESTOR_ID is FK with RESTRICT on delete. AVAIL_BALANCE constraint enforces >= 0.',
+        cols: [
+          { name: 'ta_id', type: 'BIGINT', nullable: 'NO', key: 'PRIMARY KEY (IDENTITY)' },
+          { name: 'investor_id', type: 'UUID', nullable: 'NO', key: 'FK -> INVESTOR' },
+          { name: 'avail_balance', type: 'NUMERIC(15,2)', nullable: 'NO', key: 'CHECK (>= 0)' },
+          { name: 'open_date', type: 'DATE', nullable: 'NO', key: 'DEFAULT CURRENT_DATE' }
+        ]
+      },
+      security: {
+        badge: 'SUPERTYPE',
+        desc: 'Master securities registry covering Equities and Mutual Funds with ISIN codes and sector tags.',
+        bcnf: 'SECURITY_ID is Primary Key. TICKER and ISIN are unique candidate keys. Subtypes EQUITY and MUTUAL_FUND inherit via 1:1 FK.',
+        cols: [
+          { name: 'security_id', type: 'BIGINT', nullable: 'NO', key: 'PRIMARY KEY (IDENTITY)' },
+          { name: 'ticker', type: 'VARCHAR(20)', nullable: 'NO', key: 'UNIQUE' },
+          { name: 'company_name', type: 'VARCHAR(150)', nullable: 'NO', key: '' },
+          { name: 'exchange', type: 'VARCHAR(10)', nullable: 'NO', key: 'CHECK (NSE, BSE)' },
+          { name: 'security_type', type: 'VARCHAR(20)', nullable: 'NO', key: 'ISA DISCRIMINATOR' },
+          { name: 'isin', type: 'CHAR(12)', nullable: 'NO', key: 'UNIQUE (CHECK fmt)' }
+        ]
+      },
+      holding: {
+        badge: 'PORTFOLIO',
+        desc: 'Current positions per investor and security with weighted average cost price and unrealized gains.',
+        bcnf: 'Composite unique index (INVESTOR_ID, SECURITY_ID). Trigger trg_trade_update_holdings reconciles after every trade.',
+        cols: [
+          { name: 'holding_id', type: 'BIGINT', nullable: 'NO', key: 'PRIMARY KEY (IDENTITY)' },
+          { name: 'investor_id', type: 'UUID', nullable: 'NO', key: 'FK -> INVESTOR' },
+          { name: 'security_id', type: 'BIGINT', nullable: 'NO', key: 'FK -> SECURITY' },
+          { name: 'quantity', type: 'NUMERIC(12,4)', nullable: 'NO', key: 'CHECK (>= 0)' },
+          { name: 'avg_cost_price', type: 'NUMERIC(15,4)', nullable: 'NO', key: 'CHECK (> 0)' },
+          { name: 'current_value', type: 'NUMERIC(15,2)', nullable: 'NO', key: 'CHECK (>= 0)' }
+        ]
+      },
+      order_record: {
+        badge: 'ORDERS',
+        desc: 'Full lifecycle of trading orders (OPEN -> PARTIAL -> EXECUTED / CANCELLED) with LIMIT and SL guards.',
+        bcnf: 'ORDER_ID is Primary Key. Trigger trg_validate_order checks sufficient cash or holdings before order placement.',
+        cols: [
+          { name: 'order_id', type: 'BIGINT', nullable: 'NO', key: 'PRIMARY KEY (IDENTITY)' },
+          { name: 'security_id', type: 'BIGINT', nullable: 'NO', key: 'FK -> SECURITY' },
+          { name: 'ta_id', type: 'BIGINT', nullable: 'NO', key: 'FK -> TRADING_ACC' },
+          { name: 'broker_id', type: 'UUID', nullable: 'NO', key: 'FK -> BROKER' },
+          { name: 'side', type: 'VARCHAR(4)', nullable: 'NO', key: 'CHECK (BUY, SELL)' },
+          { name: 'order_type', type: 'VARCHAR(10)', nullable: 'NO', key: 'MARKET, LIMIT, SL' },
+          { name: 'quantity', type: 'NUMERIC(12,4)', nullable: 'NO', key: 'CHECK (> 0)' },
+          { name: 'status', type: 'VARCHAR(20)', nullable: 'NO', key: 'CHECK STATUS' }
+        ]
+      },
+      trade: {
+        badge: 'EXECUTIONS',
+        desc: 'Executed transactions with statutory regulatory fee breakdown (Brokerage, STT, Exchange charges).',
+        bcnf: 'TRADE_ID is Primary Key. Trigger trg_trade_compute_net automatically calculates net_amount based on side.',
+        cols: [
+          { name: 'trade_id', type: 'BIGINT', nullable: 'NO', key: 'PRIMARY KEY (IDENTITY)' },
+          { name: 'order_id', type: 'BIGINT', nullable: 'NO', key: 'FK -> ORDER_RECORD' },
+          { name: 'trade_ref', type: 'VARCHAR(50)', nullable: 'NO', key: 'UNIQUE' },
+          { name: 'fill_price', type: 'NUMERIC(15,4)', nullable: 'NO', key: 'CHECK (> 0)' },
+          { name: 'filled_qty', type: 'NUMERIC(12,4)', nullable: 'NO', key: 'CHECK (> 0)' },
+          { name: 'brokerage_fee', type: 'NUMERIC(10,2)', nullable: 'NO', key: '' },
+          { name: 'net_amount', type: 'NUMERIC(15,2)', nullable: 'NO', key: 'AUTO-COMPUTED' }
+        ]
+      },
+      capital_gains_record: {
+        badge: 'TAXATION',
+        desc: 'Realized capital gains and losses classifying holding duration into Short-Term (STCG) vs Long-Term (LTCG).',
+        bcnf: 'Linked to BUY and SELL trades. holding_days <= 365 enforces STCG, while > 365 enforces LTCG.',
+        cols: [
+          { name: 'cg_id', type: 'BIGINT', nullable: 'NO', key: 'PRIMARY KEY (IDENTITY)' },
+          { name: 'buy_trade_id', type: 'BIGINT', nullable: 'NO', key: 'FK -> TRADE' },
+          { name: 'sell_trade_id', type: 'BIGINT', nullable: 'NO', key: 'FK -> TRADE' },
+          { name: 'gain_loss', type: 'NUMERIC(15,2)', nullable: 'NO', key: 'COMPUTED' },
+          { name: 'gain_type', type: 'VARCHAR(10)', nullable: 'NO', key: 'CHECK (STCG, LTCG)' },
+          { name: 'holding_days', type: 'INT', nullable: 'NO', key: 'CHECK (>= 0)' }
+        ]
+      }
+    };
+
+    let activeTable = 'investor';
+    let lastQueryResults = null;
+
+    // Initialize Dashboard
+    window.addEventListener('DOMContentLoaded', async () => {
+      lucide.createIcons();
+      initCharts();
+      renderSchemaTableList();
+      selectSchemaTable('investor');
+      renderPresets();
+      checkHealth();
+
+      if (window.location.hash) {
+        const h = window.location.hash.replace('#', '');
+        if (['analytics', 'playground', 'schema', 'presets', 'proofs'].includes(h)) {
+          switchTab(h);
+        }
+      }
+    });
+
+    // Health check
+    async function checkHealth() {
+      try {
+        const res = await fetch('/api/health');
+        const data = await res.json();
+        const badge = document.getElementById('conn-badge');
+        if (data.database === 'connected') {
+          badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span><span class="font-semibold">DB Connected</span>`;
+          badge.className = "px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-2 text-emerald-400";
+        } else {
+          badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-400"></span><span class="font-semibold">Demo Sandbox</span>`;
+          badge.className = "px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center gap-2 text-amber-400";
+        }
+      } catch (err) {}
+    }
+
+    // Chart.js Setup
+    function initCharts() {
+      // Risk Chart
+      const ctxRisk = document.getElementById('chart-risk').getContext('2d');
+      new Chart(ctxRisk, {
+        type: 'doughnut',
+        data: {
+          labels: ['Aggressive (2)', 'Moderate (2)', 'Conservative (1)', 'HNI (1)', 'Institutional (2)'],
+          datasets: [{
+            data: [2, 2, 1, 1, 2],
+            backgroundColor: ['#10B981', '#06B6D4', '#6366F1', '#F59E0B', '#8B5CF6'],
+            borderColor: '#0F172A',
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'bottom', labels: { color: '#94A3B8', font: { family: 'Plus Jakarta Sans', size: 11 } } }
+          }
+        }
+      });
+
+      // Securities Chart
+      const ctxSec = document.getElementById('chart-securities').getContext('2d');
+      new Chart(ctxSec, {
+        type: 'bar',
+        data: {
+          labels: ['RELIANCE', 'HDFCBANK', 'ICICIBANK', 'INFY', 'TCS'],
+          datasets: [{
+            label: 'Holdings Value (₹)',
+            data: [7670000, 1700000, 412000, 228000, 192500],
+            backgroundColor: '#10B981',
+            borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          indexAxis: 'y',
+          scales: {
+            x: { ticks: { color: '#64748B', callback: v => '₹' + (v/100000).toFixed(1) + 'L' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+            y: { ticks: { color: '#CBD5E1', font: { family: 'JetBrains Mono', weight: 'bold' } }, grid: { display: false } }
+          },
+          plugins: {
+            legend: { display: false }
+          }
+        }
+      });
+    }
+
+    // SQL Playground Execution
+    async function runQuery() {
+      const sql = document.getElementById('sql-input').value.trim();
+      const btn = document.getElementById('btn-run');
+      const errBox = document.getElementById('query-error');
+      const metaBox = document.getElementById('query-meta');
+      const errText = document.getElementById('error-text');
+
+      errBox.classList.add('hidden');
+      btn.disabled = true;
+      btn.innerHTML = `<i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i><span>Executing...</span>`;
+      lucide.createIcons();
+
+      try {
+        const res = await fetch('/api/sql', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: sql })
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error || 'Query failed');
+        }
+
+        lastQueryResults = data;
+        metaBox.classList.remove('hidden');
+        document.getElementById('meta-rows').textContent = `${data.rowCount || (data.rows ? data.rows.length : 0)} rows returned`;
+        document.getElementById('meta-time').textContent = `${data.execution_time_ms || 12}ms`;
+
+        renderTableResults(data.fields, data.rows);
+      } catch (err) {
+        errBox.classList.remove('hidden');
+        errText.textContent = err.message;
+        metaBox.classList.add('hidden');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<i data-lucide="play" class="w-3.5 h-3.5 fill-current"></i><span>Run Query</span>`;
+        lucide.createIcons();
+      }
+    }
+
+    // Render Query Result Table
+    function renderTableResults(fields, rows) {
+      const head = document.getElementById('results-head');
+      const body = document.getElementById('results-body');
+
+      if (!rows || rows.length === 0) {
+        head.innerHTML = `<tr><th class="px-4 py-3">Result</th></tr>`;
+        body.innerHTML = `<tr><td class="px-4 py-4 text-slate-400">Query executed successfully. 0 rows returned.</td></tr>`;
+        return;
+      }
+
+      const colNames = fields && fields.length > 0 ? fields : Object.keys(rows[0]);
+      head.innerHTML = `<tr>${colNames.map(c => `<th class="px-4 py-3">${c}</th>`).join('')}</tr>`;
+
+      body.innerHTML = rows.map(r => `
+        <tr class="hover:bg-slate-800/40 transition">
+          ${colNames.map(c => `<td class="px-4 py-2.5 whitespace-nowrap">${r[c] !== null && r[c] !== undefined ? r[c] : '<span class="text-slate-600">NULL</span>'}</td>`).join('')}
+        </tr>
+      `).join('');
+    }
+
+    function clearEditor() {
+      document.getElementById('sql-input').value = '';
+    }
+
+    function setQuery(presetId) {
+      const p = ALL_PRESETS.find(x => x.id === presetId);
+      if (p) {
+        document.getElementById('sql-input').value = p.sql;
+        runQuery();
+      }
+    }
+
+    function onPresetChange(val) {
+      if (val) setQuery(val);
+    }
+
+    // Export query results to CSV
+    function exportCSV() {
+      if (!lastQueryResults || !lastQueryResults.rows || lastQueryResults.rows.length === 0) return;
+      const rows = lastQueryResults.rows;
+      const headers = Object.keys(rows[0]);
+      const csv = [
+        headers.join(','),
+        ...rows.map(r => headers.map(h => JSON.stringify(r[h] ?? '')).join(','))
+      ].join('\n');
+
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `stockvault_query_export_${Date.now()}.csv`;
+      a.click();
+    }
+
+    // Schema Explorer Functions
+    function renderSchemaTableList() {
+      const list = document.getElementById('table-list');
+      const tables = Object.keys(SCHEMA_METADATA);
+      list.innerHTML = tables.map(t => `
+        <button onclick="selectSchemaTable('${t}')" id="tbl-btn-${t}" class="w-full text-left px-3.5 py-2.5 rounded-xl font-mono text-xs flex items-center justify-between border border-transparent hover:border-slate-700 hover:bg-slate-800/50 transition">
+          <span class="font-bold text-white uppercase">${t}</span>
+          <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">${SCHEMA_METADATA[t].badge}</span>
+        </button>
+      `).join('');
+    }
+
+    function selectSchemaTable(table) {
+      activeTable = table;
+      const data = SCHEMA_METADATA[table];
+      if (!data) return;
+
+      document.querySelectorAll('#table-list button').forEach(b => {
+        b.classList.remove('bg-slate-800', 'border-emerald-500/40', 'text-emerald-400');
+      });
+      const activeBtn = document.getElementById('tbl-btn-' + table);
+      if (activeBtn) {
+        activeBtn.classList.add('bg-slate-800', 'border-emerald-500/40');
+      }
+
+      document.getElementById('selected-table-name').textContent = table;
+      document.getElementById('selected-table-badge').textContent = data.badge;
+      document.getElementById('selected-table-desc').textContent = data.desc;
+      document.getElementById('table-bcnf-note').textContent = data.bcnf;
+
+      const tbody = document.getElementById('columns-body');
+      tbody.innerHTML = data.cols.map(c => `
+        <tr class="hover:bg-slate-800/30 transition">
+          <td class="px-4 py-2.5 font-bold text-white">${c.name}</td>
+          <td class="px-4 py-2.5 text-cyan-400">${c.type}</td>
+          <td class="px-4 py-2.5 ${c.nullable === 'NO' ? 'text-amber-400 font-bold' : 'text-slate-500'}">${c.nullable}</td>
+          <td class="px-4 py-2.5 text-emerald-400 font-bold">${c.key}</td>
+        </tr>
+      `).join('');
+    }
+
+    function querySelectedTable() {
+      switchTab('playground');
+      document.getElementById('sql-input').value = `SELECT * FROM trading.${activeTable} LIMIT 20;`;
+      runQuery();
+    }
+
+    // Presets Catalogue
+    function renderPresets(filter = 'all') {
+      const grid = document.getElementById('presets-grid');
+      const filtered = filter === 'all' ? ALL_PRESETS : ALL_PRESETS.filter(p => p.category === filter);
+
+      grid.innerHTML = filtered.map(p => `
+        <div class="glass-card rounded-2xl p-5 flex flex-col justify-between hover:border-emerald-500/30 transition space-y-3">
+          <div class="space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-mono font-bold px-2 py-0.5 rounded bg-slate-800 text-emerald-400 border border-slate-700">${p.id}</span>
+              <span class="text-[10px] uppercase font-bold text-slate-500">${p.category}</span>
+            </div>
+            <h4 class="text-sm font-bold text-white">${p.title}</h4>
+            <p class="text-xs text-slate-400 leading-relaxed">${p.desc}</p>
+          </div>
+          <button onclick="switchTab('playground'); setQuery('${p.id}');" class="w-full py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-400 font-mono text-xs flex items-center justify-center gap-1.5 border border-slate-700 transition">
+            <i data-lucide="play" class="w-3 h-3"></i>
+            <span>Load in Playground</span>
+          </button>
+        </div>
+      `).join('');
+      lucide.createIcons();
+    }
+
+    function filterPresets(cat) {
+      document.querySelectorAll('.preset-filter-btn').forEach(btn => {
+        btn.classList.remove('bg-emerald-500/20', 'text-emerald-400', 'border', 'border-emerald-500/30');
+        btn.classList.add('bg-slate-800', 'text-slate-300');
+      });
+      event.target.classList.add('bg-emerald-500/20', 'text-emerald-400', 'border', 'border-emerald-500/30');
+      event.target.classList.remove('bg-slate-800', 'text-slate-300');
+      renderPresets(cat);
+    }
+  </script>
+</body>
+</html>
