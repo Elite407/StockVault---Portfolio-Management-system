@@ -1,0 +1,59 @@
+# Implementation Plan: StockVault Full-Stack Dashboard
+
+This plan pivots from building a traditional REST API to building a highly aesthetic, interactive web application (like the CineFlow example) specifically tailored for **StockVault**. We will use a **Node.js/Express** backend and a **React/Vite/Tailwind** frontend.
+
+## The Scope (Mapping CineFlow to StockVault)
+
+We will recreate the core modules of the CineFlow dashboard, but adapt the business logic to your Financial Database:
+
+### 1. Analytics Dashboard & Stats Grid
+Instead of Box Office revenue, we will visualize financial metrics:
+- **Dynamic Stats Grid**: Total Assets Under Management (AUM), Active Investors, Total Daily Trading Volume, Active Brokers.
+- **Charts**: 
+  - Revenue/AUM progression over time.
+  - Distribution of Investors by Risk Profile (Conservative vs Aggressive).
+  - Top grossing Securities/Equities.
+
+### 2. SQL Playground
+- An interactive Monaco editor on the frontend.
+- Backend endpoint that safely executes read-only (`SELECT`) queries against the `trading` schema so users can test custom joins on `ORDER_RECORD`, `TRADE`, etc.
+
+### 3. Schema Explorer
+- Interactive visual ERD of your 15 tables (`INVESTOR`, `HOLDING`, `SECURITY`, etc.).
+- Introspection endpoints that read from `information_schema` to dynamically list tables, columns, and foreign keys.
+
+### 4. AI SQL Copilot (Optional/Phase 3)
+- NLP-to-SQL for the finance domain (e.g., "Show me all holdings for Investor X", "Total brokerage fee collected today").
+
+---
+
+## Proposed Implementation Phases
+
+### Phase 1: Backend Foundation (Our immediate next step)
+We will create a robust Node.js API to serve the data required by the dashboard.
+- [ ] Initialize `backend/` directory with `npm init` and install dependencies (`express`, `pg`, `cors`, `dotenv`).
+- [ ] Setup database connection pooling in `backend/db.js`.
+- [ ] **Analytics Route** (`/api/analytics`): Complex SQL queries to fetch KPI metrics (Total AUM, Brokerage Revenue, Investor Counts).
+- [ ] **Playground Route** (`/api/sql`): An endpoint that accepts a SQL string and executes it (with read-only safeguards).
+- [ ] **Schema Route** (`/api/schema`): Queries against `information_schema` to return table structures and relationships for the ERD viewer.
+
+### Phase 2: Frontend Foundation (React + Vite)
+- [ ] Initialize `frontend/` with Vite and React.
+- [ ] Set up Tailwind CSS for the dark-mode, glassmorphism UI.
+- [ ] Build the Navigation Sidebar and Shell.
+
+### Phase 3: Dashboard Integration
+- [ ] Build the Stats Grid using Recharts and connect it to the `/api/analytics` backend.
+- [ ] Build the SQL Playground using `@monaco-editor/react`.
+- [ ] Build the Schema Explorer using React Flow (`@xyflow/react`).
+
+## User Review Required
+
+> [!IMPORTANT]
+> Please review this new full-stack approach. We will be abandoning the traditional SpringBoot/PostgREST API plan to focus entirely on building this visual, interactive DBMS dashboard using **Node.js** and **React**. 
+
+## Open Questions
+
+> [!WARNING]
+> 1. Does the scope of the Analytics dashboard (AUM, Trading Volume, etc.) sound right for StockVault?
+> 2. Are you ready for me to begin **Phase 1** (initializing the Node.js backend and writing the Express routes)?
