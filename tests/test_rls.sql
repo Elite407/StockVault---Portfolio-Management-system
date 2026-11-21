@@ -6,6 +6,7 @@
 
 BEGIN;
 
+DROP ROLE IF EXISTS test_rls_user;
 CREATE ROLE test_rls_user NOSUPERUSER NOLOGIN;
 GRANT USAGE ON SCHEMA trading TO test_rls_user;
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA trading TO test_rls_user;
@@ -77,3 +78,5 @@ END;
 $$;
 
 ROLLBACK;
+
+DROP ROLE IF EXISTS test_rls_user;

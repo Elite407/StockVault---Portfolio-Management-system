@@ -55,21 +55,21 @@ INSERT INTO investor (investor_id, full_name, email, password_hash, pan_no, aadh
 ('a0000000-0000-0000-0000-000000000008', 'Zenith Fund Mgmt','zenith@example.com',  '$2b$12$e68Y2X6Z4wP3t.zenithhash999999999999999999999999999999', 'HIJZF9012H', '888899990000', '2005-05-15', 'VERIFIED',  TRUE,  'INSTITUTIONAL', NULL, 'U67890DL2005PTC654321');
 
 -- ─────────────────────────────────────────────────────────────
--- 2. KYC_DOCUMENT (12 documents — includes expiring within 30 days)
+-- 2. KYC_DOCUMENT (12 documents — includes 3 expiring within 30 days)
 -- ─────────────────────────────────────────────────────────────
 INSERT INTO kyc_document (doc_no, doc_type, issue_date, expiry_date, verification_status, investor_id) VALUES
-('PAN-AARAV-01', 'PAN',             '2015-01-10', NULL,                                'VERIFIED', 'a0000000-0000-0000-0000-000000000001'),
-('AAD-AARAV-01', 'AADHAR',          '2016-05-20', NULL,                                'VERIFIED', 'a0000000-0000-0000-0000-000000000001'),
-('PAS-AARAV-01', 'PASSPORT',        '2018-03-01', CURRENT_DATE + INTERVAL '20 days',   'VERIFIED', 'a0000000-0000-0000-0000-000000000001'), -- Expiring soon (A7)
-('PAN-PRIYA-01', 'PAN',             '2012-08-14', NULL,                                'VERIFIED', 'a0000000-0000-0000-0000-000000000002'),
-('AAD-PRIYA-01', 'AADHAR',          '2014-11-02', NULL,                                'VERIFIED', 'a0000000-0000-0000-0000-000000000002'),
-('PAN-ROHAN-01', 'PAN',             '2017-04-19', NULL,                                'VERIFIED', 'a0000000-0000-0000-0000-000000000003'),
-('PAN-NEHA-01',  'PAN',             '2010-02-28', NULL,                                'VERIFIED', 'a0000000-0000-0000-0000-000000000004'),
-('PAS-NEHA-01',  'PASSPORT',        '2015-09-10', CURRENT_DATE + INTERVAL '15 days',   'VERIFIED', 'a0000000-0000-0000-0000-000000000004'), -- Expiring soon (A7)
-('PAN-VIKRAM-01','PAN',             '2020-07-01', NULL,                                'PENDING',  'a0000000-0000-0000-0000-000000000005'),
-('PAN-ANANYA-01','PAN',             '2019-12-05', NULL,                                'VERIFIED', 'a0000000-0000-0000-0000-000000000006'),
-('PAN-BLUEST-01','PAN',             '2001-03-20', NULL,                                'VERIFIED', 'a0000000-0000-0000-0000-000000000007'),
-('PAN-ZENITH-01','PAN',             '2006-08-11', NULL,                                'VERIFIED', 'a0000000-0000-0000-0000-000000000008');
+('DOC-PAN-001',  'PAN',             '2020-01-10', NULL,                                'VERIFIED', 'a0000000-0000-0000-0000-000000000001'),
+('DOC-PASS-002', 'PASSPORT',        '2016-08-20', CURRENT_DATE + INTERVAL '15 days',   'VERIFIED', 'a0000000-0000-0000-0000-000000000001'), -- Expiring soon (A7)
+('DOC-PAN-003',  'PAN',             '2019-03-05', NULL,                                'VERIFIED', 'a0000000-0000-0000-0000-000000000002'),
+('DOC-DL-004',   'DRIVING_LICENSE', '2015-06-15', CURRENT_DATE + INTERVAL '10 days',   'VERIFIED', 'a0000000-0000-0000-0000-000000000002'), -- Expiring soon (A7)
+('DOC-PAN-005',  'PAN',             '2021-02-14', NULL,                                'VERIFIED', 'a0000000-0000-0000-0000-000000000003'),
+('DOC-AADH-006', 'AADHAR',          '2018-09-01', NULL,                                'VERIFIED', 'a0000000-0000-0000-0000-000000000003'),
+('DOC-PAN-007',  'PAN',             '2017-11-20', NULL,                                'VERIFIED', 'a0000000-0000-0000-0000-000000000004'),
+('DOC-PASS-008', 'PASSPORT',        '2017-12-01', CURRENT_DATE + INTERVAL '25 days',   'VERIFIED', 'a0000000-0000-0000-0000-000000000004'), -- Expiring soon (A7)
+('DOC-PAN-009',  'PAN',             '2023-01-10', NULL,                                'PENDING',  'a0000000-0000-0000-0000-000000000005'),
+('DOC-PAN-010',  'PAN',             '2022-04-18', NULL,                                'VERIFIED', 'a0000000-0000-0000-0000-000000000006'),
+('DOC-PAN-011',  'PAN',             '2001-03-20', NULL,                                'VERIFIED', 'a0000000-0000-0000-0000-000000000007'),
+('DOC-PAN-012',  'PAN',             '2006-08-11', NULL,                                'VERIFIED', 'a0000000-0000-0000-0000-000000000008');
 
 -- ─────────────────────────────────────────────────────────────
 -- 3. TRADING_ACC (8 trading accounts — identity 1 to 8)
